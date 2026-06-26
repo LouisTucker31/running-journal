@@ -19,7 +19,7 @@ const App = {
         ${this._tab('runs','Runs', '<path d="M4 6h16M4 12h16M4 18h10"/>')}
         ${this._tab('trends','Trends', '<path d="M3 17l5-6 4 4 8-9"/>')}
         ${this._tab('statistics','Stats', '<path d="M5 21V9M12 21V4M19 21v-7"/>')}
-        ${this._tab('settings','Settings', '<circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14.5 2h-5l-.3 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L3 11a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.3 2.4h5l.3-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z"/>')}
+        ${this._tab('settings','Settings', '<line x1="4" y1="8" x2="20" y2="8"/><circle cx="9" cy="8" r="2.4" fill="var(--bg)"/><line x1="4" y1="16" x2="20" y2="16"/><circle cx="15" cy="16" r="2.4" fill="var(--bg)"/>')}
       </nav>
       <div class="sheet-backdrop" id="sheet-backdrop"></div>
       <div class="sheet" id="sheet"></div>
@@ -126,18 +126,6 @@ const App = {
       }
     }
 
-    // runs filters / sort
-    const filter = find('[data-filter]');
-    if (filter) {
-      const v = filter.dataset.filter;
-      this.state.runsFilter = { ...this.state.runsFilter, type: null, fav: false };
-      if (v === 'fav') this.state.runsFilter.fav = true;
-      else if (v.startsWith('type:')) this.state.runsFilter.type = v.slice(5);
-      return this.render();
-    }
-    const sort = find('[data-sort]');
-    if (sort) { this.state.runsFilter = { ...this.state.runsFilter, sort: sort.dataset.sort }; return this.render(); }
-
     // trends metric
     const metric = find('[data-metric]');
     if (metric) { this.state.trends = { metric: metric.dataset.metric }; return this.render(); }
@@ -169,17 +157,14 @@ const App = {
     if (delGoal) { await DB.deleteGoal(delGoal.dataset.delGoal); this.toast('Goal removed'); return this.render(); }
   },
 
-  _onScreenInput(e) {
+  async _onScreenInput(e) {
     const search = e.target.closest('[data-runsearch]');
     if (search) {
       this.state.runsFilter = { ...this.state.runsFilter, q: search.value };
-      clearTimeout(this._searchTimer);
-      this._searchTimer = setTimeout(() => {
-        this.render().then(() => {
-          const box = document.querySelector('[data-runsearch]');
-          if (box) { box.focus(); box.setSelectionRange(box.value.length, box.value.length); }
-        });
-      }, 250);
+      // Update only the results list — never touch the input, so focus and the
+      // keyboard stay put while typing.
+      const list = document.getElementById('runs-list');
+      if (list) list.innerHTML = await Views.runsList(this.state.runsFilter);
     }
   },
 
@@ -213,6 +198,9 @@ const App = {
   _goalSheet() {
     const sheet = document.getElementById('sheet');
     document.getElementById('sheet-backdrop').classList.add('open');
+    const now = new Date();
+    const monthName = now.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const yearName = now.getFullYear();
     sheet.innerHTML = `<div class="sheet-grip"></div>
       <div class="sheet-header"><h2>Add goal</h2><button class="sheet-close" id="x">✕</button></div>
       <form id="goal-form">
@@ -222,8 +210,13 @@ const App = {
         <div class="input-row">
           <div class="field"><label>Target</label><input class="input" type="number" name="target" placeholder="100" required></div>
           <div class="field"><label>Period</label>
-            <select class="input" name="period"><option value="week">This week</option><option value="month" selected>This month</option><option value="year">This year</option></select></div>
+            <select class="input" name="period">
+              <option value="week">This week</option>
+              <option value="month" selected>${monthName}</option>
+              <option value="year">${yearName}</option>
+            </select></div>
         </div>
+        <p class="dim mb4" style="font-size:13px">Progress tracks the current ${monthName.split(' ')[0]} and rolls over automatically.</p>
         <button class="btn btn-primary btn-block" type="submit" style="padding:16px">Add goal</button>
       </form>`;
     requestAnimationFrame(() => sheet.classList.add('open'));

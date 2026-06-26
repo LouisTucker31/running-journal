@@ -1,5 +1,5 @@
 // sw.js — offline-first cache. Bump CACHE on any asset change.
-const CACHE = 'running-journal-v1';
+const CACHE = 'running-journal-v2';
 const ASSETS = [
   './',
   './index.html',

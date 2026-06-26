@@ -22,13 +22,13 @@ const LogForm = {
         ${this._templatePills(templates, r)}
 
         <div class="field"><label>Date *</label>
-          <input class="input" type="date" name="date" value="${r.date || Util.today()}" required></div>
+          <input class="input" type="date" name="date" value="${r.date || Util.today()}"></div>
 
         <div class="input-row">
           <div class="field"><label>Distance (km) *</label>
-            <input class="input" type="number" step="0.01" inputmode="decimal" name="distance" value="${r.distance ?? ''}" placeholder="10.0" required></div>
+            <input class="input" type="number" step="0.01" inputmode="decimal" name="distance" value="${r.distance ?? ''}" placeholder="10.0"></div>
           <div class="field"><label>Duration *</label>
-            <input class="input" type="text" name="duration" value="${r.duration ? Util.fmtDuration(r.duration) : ''}" placeholder="50:00" required></div>
+            <input class="input" type="text" name="duration" inputmode="numeric" value="${r.duration ? Util.fmtDuration(r.duration) : ''}" placeholder="50:00"></div>
         </div>
 
         <div class="field"><label>Title</label>
@@ -168,7 +168,12 @@ const LogForm = {
     this._wirePhotoRemovers(sheet);
 
     sheet.querySelector('[data-close-sheet]').onclick = () => this.close();
-    sheet.querySelector('#log-form').onsubmit = (e) => { e.preventDefault(); this._save(e.target); };
+    const form = sheet.querySelector('#log-form');
+    form.addEventListener('submit', (e) => { e.preventDefault(); this._save(form); });
+    // Direct fallback: some iOS PWA cases swallow form submit — bind the button too.
+    form.querySelector('button[type="submit"]').addEventListener('click', (e) => {
+      e.preventDefault(); this._save(form);
+    });
   },
 
   _wirePhotoRemovers(sheet) {

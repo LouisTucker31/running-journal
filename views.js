@@ -91,46 +91,30 @@ const Views = {
 
   // ---- RUNS -------------------------------------------------------------
   async runs(state = {}) {
+    let html = `<div class="view-header"><div class="view-eyebrow">Your journal</div><h1 class="view-title">Runs</h1></div>`;
+    html += `<input class="input mb4" type="search" placeholder="Search runs…" data-runsearch value="${Util.escapeHtml(state.q||'')}">`;
+    html += `<div id="runs-list">${await this.runsList(state)}</div>`;
+    return html;
+  },
+
+  async runsList(state = {}) {
     const runs = await DB.getRuns();
     const q = (state.q || '').toLowerCase();
     let filtered = runs.filter(r => {
-      if (q && !((r.title||'').toLowerCase().includes(q) || (r.notes||'').toLowerCase().includes(q) || (r.typeName||'').toLowerCase().includes(q))) return false;
-      if (state.fav && !r.favourite) return false;
-      if (state.type && r.typeName !== state.type) return false;
-      return true;
+      if (!q) return true;
+      return (r.title||'').toLowerCase().includes(q)
+        || (r.notes||'').toLowerCase().includes(q)
+        || (r.typeName||'').toLowerCase().includes(q);
     });
-    const sortKey = state.sort || 'date-desc';
-    filtered.sort((a, b) => {
-      if (sortKey === 'date-desc') return b.date.localeCompare(a.date);
-      if (sortKey === 'date-asc') return a.date.localeCompare(b.date);
-      if (sortKey === 'dist-desc') return (b.distance||0)-(a.distance||0);
-      if (sortKey === 'dist-asc') return (a.distance||0)-(b.distance||0);
-      return 0;
-    });
-
-    const types = [...new Set(runs.map(r => r.typeName).filter(Boolean))];
-
-    let html = `<div class="view-header"><div class="view-eyebrow">Your journal</div><h1 class="view-title">Runs</h1></div>`;
-    html += `<input class="input mb3" type="search" placeholder="Search runs…" data-runsearch value="${Util.escapeHtml(state.q||'')}">`;
-
-    html += `<div class="metric-pills">
-      <button class="chip ${!state.type && !state.fav?'active':''}" data-filter="all">All</button>
-      <button class="chip ${state.fav?'active':''}" data-filter="fav">★ Favourites</button>
-      ${types.map(t => `<button class="chip ${state.type===t?'active':''}" data-filter="type:${Util.escapeHtml(t)}">${Util.escapeHtml(t)}</button>`).join('')}
-    </div>`;
-
-    html += `<div class="row gap mb4" style="overflow-x:auto">
-      ${[['date-desc','Newest'],['date-asc','Oldest'],['dist-desc','Longest'],['dist-asc','Shortest']]
-        .map(([k,l]) => `<button class="chip ${sortKey===k?'active':''}" data-sort="${k}">${l}</button>`).join('')}
-    </div>`;
+    filtered.sort((a, b) => b.date.localeCompare(a.date)); // newest first
 
     if (!filtered.length) {
-      html += this._empty('🔍', 'No runs found', runs.length ? 'Try a different search or filter.' : 'Log your first run to get started.');
-    } else {
-      html += `<div class="card" style="padding:var(--s2) var(--s5)">`;
-      for (const r of filtered) html += await this._runItem(r);
-      html += `</div>`;
+      return this._empty('🔍', q ? 'No matches' : 'No runs yet',
+        q ? 'Try a different search.' : 'Log your first run to get started.');
     }
+    let html = `<div class="card" style="padding:var(--s2) var(--s5)">`;
+    for (const r of filtered) html += await this._runItem(r);
+    html += `</div>`;
     return html;
   },
 

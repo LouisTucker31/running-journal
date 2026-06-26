@@ -2,8 +2,7 @@
 
 /* Bottom navigation ------------------------------------------------------- */
 .tabbar {
-  position: fixed; left: 50%; transform: translateX(-50%); bottom: 0;
-  width: 100%; max-width: 560px; z-index: 50;
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 50;
   display: flex; justify-content: space-around; align-items: center;
   height: calc(var(--nav-h) + var(--safe-bot));
   padding-bottom: var(--safe-bot);
@@ -98,7 +97,7 @@
   bottom: 0; width: 100%; max-width: 560px; z-index: 101;
   background: var(--bg-2); border-top-left-radius: var(--r-xl); border-top-right-radius: var(--r-xl);
   border-top: 1px solid var(--glass-brd);
-  max-height: 92vh; overflow-y: auto;
+  max-height: 92vh; overflow-y: auto; overflow-x: hidden;
   padding: var(--s4) var(--s4) calc(var(--safe-bot) + var(--s6));
   transition: transform 0.4s var(--ease);
 }
@@ -114,7 +113,10 @@
 .acc-head h3 { font-size: 15px; }
 .acc-head .chev { transition: transform 0.25s var(--ease); color: var(--text-3); }
 .acc.open .acc-head .chev { transform: rotate(90deg); }
-.acc-body { display: none; padding: var(--s4); padding-top: 0; }
+.acc-body { display: none; padding: var(--s4); }
+.acc-body > .field:last-child,
+.acc-body > .input-row:last-child { margin-bottom: 0; }
+.acc-body > .input-row:last-child .field { margin-bottom: 0; }
 .acc.open .acc-body { display: block; animation: viewIn 0.3s var(--ease); }
 
 /* Run detail -------------------------------------------------------------- */
